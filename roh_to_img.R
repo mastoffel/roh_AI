@@ -1,6 +1,6 @@
 library(tidyverse)
 library(data.table)
-
+library(plot.matrix)
 # fitness data
 load("../sheep_roh/data/fitness_roh.RData") 
 juv_surv <- fitness_data %>% 
@@ -36,20 +36,22 @@ side <- round(sqrt(genome)+1, 0)
 pix <- rep(0, side*side)
 
 # save imgs in correct folder structure
-roh_img_per_ind <- function(id) {
+roh_img_per_ind <- function(ind_id) {
       
-      roh_ind <- roh %>% filter(IID == id) 
+      roh_ind <- roh %>% filter(IID == ind_id) 
       rohs <- unlist(Map(':', roh_ind$POS1_mb, roh_ind$POS2_mb))
       # make image
       pix[rohs] <- 255
       mat <- matrix(pix, nrow = side, byrow = T)
       
       surv <- juv_surv %>% 
-                  dplyr::filter(id == {{ id }}) %>% 
+                  dplyr::filter(id == ind_id) %>% 
                   .[["survival"]]
       
       # plot
-      png(paste0("images/surv_", surv, "/", id, ".png")) 
+      if (ind_id < 0) ind_id <- as.numeric(paste0("99", abs(ind_id)))
+      
+      png(paste0("images/surv_", surv, "/", ind_id, ".png")) 
       # 2. Create a plot
       par(mar=c(0,0,0,0))
       plot(mat, col = c("black", "white"), key = NULL, axis.col = NULL, axis.row=NULL,
@@ -58,4 +60,7 @@ roh_img_per_ind <- function(id) {
       dev.off() 
 }
 
-map(unique(juv_surv$id)[1:1000], roh_img_per_ind)
+map(unique(juv_surv$id)[sample(1:nrow(juv_surv), 1000, replace=FALSE)], roh_img_per_ind)
+
+l1 <- list.files("images/surv_0/")
+l2 <- list.files("images/surv_1/")
